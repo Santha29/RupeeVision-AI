@@ -1,0 +1,30 @@
+{
+ "base": {
+  "model": "model_improvement/yolov8n.pt",
+  "data": "model_improvement/data/v2.yaml",
+  "epochs": 100,
+  "patience": 20,
+  "imgsz": 512,
+  "batch": 8,
+  "optimizer": "AdamW",
+  "lr0": 0.002,
+  "seed": 42,
+  "deterministic": true,
+  "device": "cpu",
+  "workers": 4,
+  "plots": true,
+  "verbose": false
+ },
+ "experiments": {
+  "exp01_control": {
+   "hypothesis": "Control: the original Kaggle recipe (yolov8n, AdamW lr0 0.002, batch 8, patience 20) at the dataset's native 512 px, trained locally so later runs compare like-for-like.",
+   "args": {}
+  },
+  "exp02_oversample8": {
+   "hypothesis": "Positives are 25/382 train images (6.5%). Repeating each positive image 8x in the training list (25 -> 200 sampled positives per epoch, dataset files untouched) should raise confidence on unseen poses of the note.",
+   "args": {
+    "oversample_positives": 8
+   }
+  }
+ }
+}

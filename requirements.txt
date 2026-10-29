@@ -1,0 +1,6 @@
+opencv-python>=4.8
+numpy>=1.24
+Pillow>=10.0        # draws the ₹ symbol (OpenCV fonts cannot); falls back to "Rs.50" without it
+onnx>=1.14          # reads model shapes/metadata; optional, a dry run is used if missing
+# Optional, only for `python test.py --compare-pt`:
+# ultralytics>=8.3

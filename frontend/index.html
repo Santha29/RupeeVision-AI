@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Backend URL used by script.js. Change this if the API runs elsewhere. -->
+  <meta name="rv-api-base" content="http://127.0.0.1:8000">
+  <title>RupeeVision AI</title>
+  <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="brand">
+      <img src="assets/logo.svg" alt="" class="brand-logo" width="40" height="40">
+      <div>
+        <h1>RupeeVision AI</h1>
+        <p class="subtitle">Indian ₹50 Banknote Detection</p>
+      </div>
+    </div>
+    <div class="status-group" aria-live="polite">
+      <span class="pill" id="backend-status" data-state="pending"><span class="dot"></span><span class="pill-text">Backend: checking…</span></span>
+      <span class="pill" id="model-status" data-state="pending"><span class="dot"></span><span class="pill-text">Model: checking…</span></span>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="settings-bar card">
+      <label for="conf-input">Confidence threshold</label>
+      <input type="range" id="conf-input" min="0.05" max="0.95" step="0.05" value="0.6">
+      <output id="conf-value" for="conf-input">0.60</output>
+      <span class="hint" id="model-meta"></span>
+    </div>
+
+    <div class="grid-2">
+      <!-- Section A: live webcam -->
+      <section class="card" aria-labelledby="webcam-title">
+        <div class="card-head">
+          <h2 id="webcam-title">Live webcam detection</h2>
+          <span class="badge" id="live-badge" hidden>LIVE</span>
+        </div>
+        <div class="stage" id="webcam-stage">
+          <video id="webcam-video" playsinline muted></video>
+          <img id="webcam-result" alt="Annotated webcam frame" hidden>
+          <div class="stage-empty" id="webcam-placeholder">Camera is off</div>
+        </div>
+        <div class="controls">
+          <button type="button" class="btn btn-primary" id="btn-camera-start">Start Camera</button>
+          <button type="button" class="btn" id="btn-camera-stop" disabled>Stop Camera</button>
+          <button type="button" class="btn btn-primary" id="btn-detect-start" disabled>Start Detection</button>
+          <button type="button" class="btn" id="btn-detect-stop" disabled>Stop Detection</button>
+        </div>
+        <div class="readout">
+          <span>Notes: <strong id="live-count">–</strong></span>
+          <span>Inference: <strong id="live-ms">–</strong></span>
+          <span>Rate: <strong id="live-rate">–</strong></span>
+        </div>
+        <p class="message" id="webcam-message" role="status"></p>
+        <canvas id="capture-canvas" hidden></canvas>
+      </section>
+
+      <!-- Section B: image upload -->
+      <section class="card" aria-labelledby="upload-title">
+        <div class="card-head">
+          <h2 id="upload-title">Image upload</h2>
+        </div>
+        <label class="dropzone" id="dropzone" for="file-input">
+          <input type="file" id="file-input" accept="image/jpeg,image/png,.jpg,.jpeg,.png">
+          <img id="upload-preview" alt="Selected image preview" hidden>
+          <span class="dropzone-text" id="dropzone-text">
+            <strong>Drag &amp; drop an image here</strong><br>
+            JPG, JPEG or PNG
+          </span>
+        </label>
+        <div class="controls">
+          <button type="button" class="btn" id="btn-choose">Choose Image</button>
+          <button type="button" class="btn btn-primary" id="btn-upload-detect" disabled>Detect</button>
+          <span class="spinner" id="upload-spinner" hidden aria-label="Detecting"></span>
+          <span class="file-name" id="file-name"></span>
+        </div>
+        <div class="result-wrap" id="upload-result-wrap" hidden>
+          <h3>Result</h3>
+          <img id="upload-result" alt="Annotated upload result">
+          <div class="readout">
+            <span>Notes: <strong id="upload-count">–</strong></span>
+            <span>Confidence: <strong id="upload-conf">–</strong></span>
+            <span>Inference: <strong id="upload-ms">–</strong></span>
+          </div>
+        </div>
+        <p class="message" id="upload-message" role="status"></p>
+      </section>
+    </div>
+
+    <!-- Section C: statistics -->
+    <section aria-labelledby="stats-title">
+      <h2 id="stats-title" class="section-title">Detection statistics <span class="hint" id="stats-source"></span></h2>
+      <div class="stats">
+        <div class="card stat">
+          <span class="stat-label">Current detections</span>
+          <span class="stat-value" id="stat-count">–</span>
+        </div>
+        <div class="card stat">
+          <span class="stat-label">Highest confidence</span>
+          <span class="stat-value" id="stat-conf">–</span>
+        </div>
+        <div class="card stat">
+          <span class="stat-label">Latest inference time</span>
+          <span class="stat-value" id="stat-ms">–</span>
+        </div>
+        <div class="card stat">
+          <span class="stat-label">Backend / model</span>
+          <span class="stat-value stat-value-sm" id="stat-status">–</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section D: results table -->
+    <section class="card" aria-labelledby="results-title">
+      <div class="card-head">
+        <h2 id="results-title">Detection results</h2>
+        <span class="hint" id="results-meta"></span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>#</th><th>Label</th><th>Confidence</th><th>Bounding box (x1, y1, x2, y2)</th><th>Size</th></tr>
+          </thead>
+          <tbody id="results-body">
+            <tr class="empty-row"><td colspan="5">No detections yet. Upload an image or start live detection.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    Inference runs on the Python backend . API docs: <a href="/docs" id="docs-link">/docs</a>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
